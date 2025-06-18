@@ -2,8 +2,12 @@ from typing import Annotated
 from langchain_core.tools import StructuredTool, ToolException, tool
 import aiohttp
 import re
+import logging
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession, Tool, McpError
+
+# Set up logging for MCP tools
+logger = logging.getLogger(__name__)
 
 
 def create_langchain_mcp_tool(
@@ -18,11 +22,18 @@ def create_langchain_mcp_tool(
     )
     async def new_tool(**kwargs):
         """Dynamically created MCP tool."""
-        async with streamablehttp_client(mcp_server_url, headers=headers) as streams:
-            read_stream, write_stream, _ = streams
-            async with ClientSession(read_stream, write_stream) as tool_session:
-                await tool_session.initialize()
-                return await tool_session.call_tool(mcp_tool.name, arguments=kwargs)
+        logger.info(f"🔧 Calling MCP tool: {mcp_tool.name} with args: {kwargs}")
+        try:
+            async with streamablehttp_client(mcp_server_url, headers=headers) as streams:
+                read_stream, write_stream, _ = streams
+                async with ClientSession(read_stream, write_stream) as tool_session:
+                    await tool_session.initialize()
+                    result = await tool_session.call_tool(mcp_tool.name, arguments=kwargs)
+                    logger.info(f"✅ MCP tool {mcp_tool.name} completed successfully")
+                    return result
+        except Exception as e:
+            logger.error(f"❌ MCP tool {mcp_tool.name} failed: {str(e)}")
+            raise
 
     return new_tool
 

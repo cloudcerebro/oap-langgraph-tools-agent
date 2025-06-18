@@ -111,10 +111,11 @@ class GraphConfigPydantic(BaseModel):
         metadata={
             "x_oap_ui_config": {
                 "type": "mcp",
-                # Here is where you would set the default tools.
-                # "default": {
-                #     "tools": ["Math_Divide", "Math_Mod"]
-                # }
+                "default": {
+                    "url": "http://localhost:8000",
+                    "tools": ["add_numbers"],
+                    "auth_required": False
+                }
             }
         },
     )
